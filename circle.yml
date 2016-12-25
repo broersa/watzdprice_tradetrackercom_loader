@@ -14,14 +14,14 @@ dependencies:
 
 test:
   override:
-    - ./node_modules/.bin/mocha test --reporter mocha-circleci-reporter:
+    - ./node_modules/.bin/_mocha test --reporter mocha-circleci-reporter:
         environment:
           MOCHA_FILE: "$CIRCLE_TEST_REPORTS/junit/test-results.xml"
 
 deployment:
   prod:
-    branch: develop
+    branch: master
     commands:
-      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS $EXTERNAL_REGISTRY_ENDPOINT
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - docker push $EXTERNAL_REGISTRY_ENDPOINT/watzdprice_tradetrackercom_loader:$CIRCLE_BUILD_NUM
       - docker push $EXTERNAL_REGISTRY_ENDPOINT/watzdprice_tradetrackercom_loader:latest
