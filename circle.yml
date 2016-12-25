@@ -4,9 +4,6 @@ machine:
   services:
     - docker
 
-general:
-  build_dir: src
-
 dependencies:
   pre:
     - docker build --rm=false -t $EXTERNAL_REGISTRY_ENDPOINT/watzdprice_tradetrackercom_loader:$CIRCLE_BUILD_NUM ../.
@@ -14,7 +11,7 @@ dependencies:
 
 test:
   override:
-    - mocha test --reporter mocha-circleci-reporter:
+    - ./node_modules/.bin/_mocha test --reporter mocha-circleci-reporter:
         environment:
           MOCHA_FILE: "$CIRCLE_TEST_REPORTS/junit/test-results.xml"
 
