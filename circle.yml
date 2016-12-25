@@ -6,7 +6,7 @@ machine:
 
 dependencies:
   pre:
-    - docker build --rm=false -t $EXTERNAL_REGISTRY_ENDPOINT/watzdprice_tradetrackercom_loader:$CIRCLE_BUILD_NUM ../.
+    - docker build --rm=false -t $EXTERNAL_REGISTRY_ENDPOINT/watzdprice_tradetrackercom_loader:$CIRCLE_BUILD_NUM .
     - docker tag $EXTERNAL_REGISTRY_ENDPOINT/watzdprice_tradetrackercom_loader:$CIRCLE_BUILD_NUM $EXTERNAL_REGISTRY_ENDPOINT/watzdprice_tradetrackercom_loader:latest
 
 test:
