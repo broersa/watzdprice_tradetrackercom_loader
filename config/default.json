@@ -1,6 +1,5 @@
 {
   "tradetrackercom_url": "url",
   "tradetrackercom_shop": "shop",
-  "tradetrackercom_elastic_url": "elastic_url",
-  "tradetrackercom_elastic_index": "elastic_index"
+  "tradetrackercom_watzdprice_url": "watzdprice_url"
 }
