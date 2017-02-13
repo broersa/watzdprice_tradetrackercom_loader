@@ -12,26 +12,37 @@ module.exports = {
     var urlDetails = url.parse(watzdprice_url);
     tradeTrackerCom.getTradeTrackerComData(tradetracker_url, function(data) {
       async.eachLimit(data.products, 1, function (i, cb) {
-        var product = {
-          name: i.name,
-          description: i.description,
-          eancode: i.properties.EAN[0],
-          shop: shop,
-          category: '',
-          price: i.price.amount,
-          url: i.URL,
-          image: i.images[0],
-          datetime: moment().format()
-        };
-        putProduct(urlDetails, JSON.stringify(product), function (err, operation) {
-          if (operation === 'added') {
-            added++;
+        console.log(i.name);
+        try {
+          var product = {
+            name: i.name.substring(0,255),
+            description: i.description?i.description.substring(0,1999):'',
+            eancode: i.properties.EAN[0]?i.properties.EAN[0].substring(0,255):'',
+            shop: shop,
+            category: (Object.keys(i.categories)[0])?(Object.keys(i.categories)[0]).substring(0,255):'',
+            brand: i.properties.brand[0]?i.properties.brand[0].substring(0,255):'',
+            price: i.price.amount,
+            url: i.URL.substring(0,1999),
+            image: i.images[0]?i.images[0].substring(0,1999):'',
+            datetime: moment().format()
+          };
+          putProduct(urlDetails, JSON.stringify(product), function (err, operation) {
+            if (err) {
+              console.error(shop + " - Error putProduct: " + err.message + " - " + JSON.stringify(i) + " - " + JSON.stringify(product));
+              return cb(null);
+            }
+            if (operation === 'added') {
+              added++;
+            }
+            if (operation === 'updated') {
+              updated++;
+            }
+            return cb(null);
+          });
+        } catch (err) {
+            console.error(shop + " - Error: " + err.message + " - " + JSON.stringify(i) + " - " + JSON.stringify(product) );
+            return cb(null);
           }
-          if (operation === 'updated') {
-            updated++;
-          }
-          cb(err);
-        });
       }, function (error) {
         if (error) {
           return cb(error);
