@@ -3,6 +3,7 @@ var moment = require('moment');
 var tradeTrackerCom = require('../dal/tradeTrackerCom.js');
 var url = require('url');
 var http = require('http');
+var MyError = require('../MyError.js');
 
 module.exports = {
   process: function(tradetracker_url, watzdprice_url, shop, cb) {
@@ -10,9 +11,11 @@ module.exports = {
     var added = 0;
     var updated = 0;
     var urlDetails = url.parse(watzdprice_url);
-    tradeTrackerCom.getTradeTrackerComData(tradetracker_url, function(data) {
+    tradeTrackerCom.getTradeTrackerComData(tradetracker_url, function(err, data) {
+      if (err) {
+        return cb(new MyError('ERROR', 'process', 'Error', {tradetracker_url: tradetracker_url, watzdprice_url: watzdprice_url, shop: shop}, err));
+      }
       async.eachLimit(data.products, 1, function (i, cb) {
-        console.log(i.name);
         try {
           var product = {
             name: i.name.substring(0,255),
@@ -26,26 +29,24 @@ module.exports = {
             image: i.images[0]?i.images[0].substring(0,1999):'',
             datetime: moment().format()
           };
-          putProduct(urlDetails, JSON.stringify(product), function (err, operation) {
-            if (err) {
-              console.error(shop + " - Error putProduct: " + err.message + " - " + JSON.stringify(i) + " - " + JSON.stringify(product));
-              return cb(null);
-            }
-            if (operation === 'added') {
-              added++;
-            }
-            if (operation === 'updated') {
-              updated++;
-            }
-            return cb(null);
-          });
         } catch (err) {
-            console.error(shop + " - Error: " + err.message + " - " + JSON.stringify(i) + " - " + JSON.stringify(product) );
-            return cb(null);
+          return cb();
+        }
+        putProduct(urlDetails, JSON.stringify(product), function (err, operation) {
+          if (err) {
+            return cb(err);
           }
-      }, function (error) {
-        if (error) {
-          return cb(error);
+          if (operation === 'added') {
+            added++;
+          }
+          if (operation === 'updated') {
+            updated++;
+          }
+          return cb();
+        });
+      }, function (err) {
+        if (err) {
+          return cb(new MyError('ERROR', 'process', 'Error', {tradetracker_url: tradetracker_url, watzdprice_url: watzdprice_url, shop: shop}, err));
         }
         return postShopLoadStats(urlDetails, JSON.stringify({
           shop: shop,
@@ -73,15 +74,18 @@ function putProduct (urlDetails, product, callback) {
 
   // Set up the request
   var put_req = http.request(put_options, function(res) {
-      res.setEncoding('utf8');
-      var body = '';
-      res.on('data', function (chunk) {
-        body = body + chunk;
-      });
-      res.on('end', function() {
-        var d = JSON.parse(body);
-        callback(null, d.operation);
-      })
+    res.setEncoding('utf8');
+    var body = '';
+    res.on('data', function (chunk) {
+      body = body + chunk;
+    });
+    res.on('end', function() {
+      var d = JSON.parse(body);
+      callback(null, d.operation);
+    });
+    res.on('error', function(err) {
+      callback(new MyError('ERROR', 'putProduct', 'Error', {urlDetails: urlDetails, product: product}, err));
+    });
   });
 
   // post the data
@@ -103,10 +107,13 @@ function postShopLoadStats (urlDetails, shopLoadStats, callback) {
 
   // Set up the request
   var put_req = http.request(post_options, function(res) {
-      res.setEncoding('utf8');
-      res.on('end', function() {
-        callback(null);
-      })
+    res.setEncoding('utf8');
+    res.on('end', function() {
+      callback();
+    });
+    res.on('error', function(err) {
+      callback(new MyError('ERROR', 'postShopLoadStats', 'Error', {urlDetails: urlDetails, shopLoadStats: shopLoadStats}, err));
+    });
   });
 
   // post the data

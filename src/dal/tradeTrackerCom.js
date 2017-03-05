@@ -1,4 +1,5 @@
 var http = require('http');
+var MyError = require('../MyError.js');
 
 module.exports = {
   getTradeTrackerComData: function(url, callback) {
@@ -9,9 +10,12 @@ module.exports = {
           body += d;
       });
       response.on('end', function() {
-          // Data reception is done, do whatever with it!
-          var parsed = JSON.parse(body);
-          callback(parsed);
+        // Data reception is done, do whatever with it!
+        var parsed = JSON.parse(body);
+        callback(null, parsed);
+      });
+      response.on('error', function(err) {
+        callback(new MyError('ERROR', 'getTradeTrackerComData', 'Error', {url: url}, err));
       });
     });
   }
